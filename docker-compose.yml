@@ -1,0 +1,39 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    container_name: rabbitmq-consumer-hyperf
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - ./.docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./.docker/rabbitmq/certs/ca.pem:/etc/ssl/rmq-cacert.pem:ro
+      - ./.docker/rabbitmq/certs/server-cert.pem:/etc/ssl/rmq-cert.pem:ro
+      - ./.docker/rabbitmq/certs/server-key.pem:/etc/ssl/rmq-key.pem:ro
+
+  hyperf-skeleton:
+    container_name: hyperf-skeleton
+    image: hyperf-skeleton
+    build:
+      context: .
+    volumes:
+      - ./:/opt/www
+      - ~/.ssh/McAfee.pem:/etc/ssl/certs/McAfee.pem
+    tty: true
+    ports:
+      - 9501:9501
+    environment:
+      - APP_ENV=dev
+      - SCAN_CACHEABLE=false
+      # AMQP
+      - AMQP_HOST=rabbitmq
+      - AMQP_PORT=5672
+      - AMQP_USER=guest
+      - AMQP_PASSWORD=guest
+    depends_on:
+      - rabbitmq
+
+networks:
+  default:
+    name: hyperf-skeleton
